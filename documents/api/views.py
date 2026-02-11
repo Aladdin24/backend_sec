@@ -182,25 +182,17 @@ def download_document(request, document_id):
     Retourne les métadonnées + une URL pré-signée pour télécharger
     un document chiffré auquel l'utilisateur a accès.
     """
-    # 1. Vérifier l'accès
+    # 1. Vérifier que le document existe et que l'utilisateur y a accès
     doc = get_object_or_404(Document, id=document_id)
     access = get_object_or_404(DocumentAccess, document=doc, user=request.user)
 
-    # 2. Vérifier la configuration S3
-    required_settings = [
-        'AWS_S3_ENDPOINT_URL',
-        'AWS_STORAGE_BUCKET_NAME',
-        'AWS_ACCESS_KEY_ID',
-        'AWS_SECRET_ACCESS_KEY'
-    ]
-    for setting in required_settings:
-        if not hasattr(settings, setting) or not getattr(settings, setting):
-            return Response(
-                {'error': 'Stockage objet non configuré'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+    # 2. Générer une URL pré-signée pour le téléchargement (valide 1h)
+    if not hasattr(settings, 'AWS_S3_ENDPOINT_URL'):
+        return Response(
+            {'error': 'Stockage objet non configuré'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
-    # 3. Créer le client S3
     s3_client = boto3.client(
         's3',
         endpoint_url=settings.AWS_S3_ENDPOINT_URL,
@@ -211,7 +203,6 @@ def download_document(request, document_id):
         verify=getattr(settings, 'AWS_S3_VERIFY', True),
     )
 
-    # 4. Générer l'URL pré-signée
     try:
         download_url = s3_client.generate_presigned_url(
             'get_object',
@@ -219,36 +210,35 @@ def download_document(request, document_id):
                 'Bucket': settings.AWS_STORAGE_BUCKET_NAME,
                 'Key': doc.storage_path
             },
-            ExpiresIn=3600
+            ExpiresIn=3600  # 1 heure
         )
-        
-        # ✅ CORRECTION : Ne PAS modifier l'URL pour Backblaze
-        # Seulement pour MinIO local (développement)
-        # if hasattr(settings, 'MINIO_PUBLIC_URL') and settings.DEBUG:
-        #     parsed = urlparse(download_url)
-        #     download_url = download_url.replace(
-        #         f"{parsed.scheme}://{parsed.netloc}",
-        #         settings.MINIO_PUBLIC_URL
-        #     )
-            
+        # 🔁 Remplacer l’endpoint par l’IP publique
+        # parsed = urlparse(download_url)
+        # download_url = download_url.replace(
+        #     f"{parsed.scheme}://{parsed.netloc}",
+        #     settings.MINIO_PUBLIC_URL
+        # )
     except ClientError as e:
         return Response(
             {'error': f'Erreur stockage: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
-    # 5. Répondre avec les métadonnées
+    # 3. Récupérer la clé publique de l'uploader
+    uploader_public_key = doc.uploaded_by.public_key
+
+    # 4. Répondre avec toutes les métadonnées nécessaires
     return Response({
         'document_id': str(doc.id),
         'filename': doc.filename,
         'mime_type': doc.mime_type,
-        'download_url': download_url,
-        'file_hash': doc.file_hash,
-        'signature': doc.signature,
-        'encrypted_aes_key': access.encrypted_aes_key,
+        'download_url': download_url,          # URL temporaire vers le fichier chiffré
+        'file_hash': doc.file_hash,            # SHA-256 du contenu original (non chiffré)
+        'signature': doc.signature,            # Signature du hash (base64)
+        'encrypted_aes_key': access.encrypted_aes_key,  # À déchiffrer avec la clé privée de l'utilisateur
         'uploaded_by': {
             'email': doc.uploaded_by.email,
-            'public_key': doc.uploaded_by.public_key
+            'public_key': uploader_public_key
         },
         'uploaded_at': doc.created_at
     })
@@ -307,21 +297,30 @@ from drf_spectacular.utils import extend_schema, OpenApiResponse
 @permission_classes([permissions.IsAuthenticated])
 def prepare_upload(request):
     """
-    Génère une URL pré-signée pour l'upload direct vers MinIO/Backblaze B2.
+    Génère une URL pré-signée pour l'upload direct d'un fichier chiffré vers MinIO.
+    
+    Payload attendu :
+    {
+        "filename": "mon_document.pdf"
+    }
+    
+    Réponse :
+    {
+        "upload_url": "https://minio/...?X-Amz-Signature=...",
+        "storage_path": "abc123_mon_document.pdf"
+    }
     """
-    # 1. Vérifier la configuration S3
-    required_settings = [
-        'AWS_S3_ENDPOINT_URL',
-        'AWS_STORAGE_BUCKET_NAME',
-        'AWS_ACCESS_KEY_ID',
-        'AWS_SECRET_ACCESS_KEY'
-    ]
-    for setting in required_settings:
-        if not hasattr(settings, setting) or not getattr(settings, setting):
-            return Response(
-                {'error': 'Stockage objet non configuré'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+    # 1. Vérifier que MinIO est configuré
+    if not all([
+        hasattr(settings, 'AWS_S3_ENDPOINT_URL'),
+        hasattr(settings, 'AWS_STORAGE_BUCKET_NAME'),
+        hasattr(settings, 'AWS_ACCESS_KEY_ID'),
+        hasattr(settings, 'AWS_SECRET_ACCESS_KEY')
+    ]):
+        return Response(
+            {'error': 'Stockage objet non configuré'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
     # 2. Valider le nom de fichier
     filename = request.data.get('filename')
@@ -331,47 +330,48 @@ def prepare_upload(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
+    # Nettoyer le nom de fichier (sécurité)
     filename = os.path.basename(filename)
-    if not filename or filename.startswith('.') or any(c in filename for c in '/\\'):
+    if not filename or filename.startswith('.') or '/' in filename or '\\' in filename:
         return Response(
             {'error': 'Nom de fichier invalide'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    # 3. Générer un nom unique
+    # 3. Générer un nom unique pour éviter les collisions
     unique_name = f"{uuid.uuid4().hex}_{filename}"
     bucket = settings.AWS_STORAGE_BUCKET_NAME
 
-    # 4. Créer le client S3
+    # 4. Créer le client MinIO
     s3_client = boto3.client(
         's3',
         endpoint_url=settings.AWS_S3_ENDPOINT_URL,
         aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
         aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-        region_name=getattr(settings, 'AWS_S3_REGION_NAME', 'us-east-1'),
-        use_ssl=getattr(settings, 'AWS_S3_USE_SSL', True),
-        verify=getattr(settings, 'AWS_S3_VERIFY', True),
+        region_name=settings.AWS_S3_REGION_NAME,
+        use_ssl=settings.AWS_S3_USE_SSL,
+        verify=settings.AWS_S3_VERIFY,
     )
 
-    # 5. Générer l'URL pré-signée
+    # 5. Générer l'URL pré-signée (valide 10 minutes)
     try:
         upload_url = s3_client.generate_presigned_url(
             'put_object',
-            Params={'Bucket': bucket, 'Key': unique_name},
-            ExpiresIn=600,
+            Params={
+                'Bucket': bucket,
+                'Key': unique_name,
+                # Important : forcer le type de contenu si nécessaire
+                # 'ContentType': 'application/octet-stream'
+            },
+            ExpiresIn=600,  # 10 minutes
             HttpMethod='PUT'
         )
-        
-        # ✅ CORRECTION : Ne PAS modifier l'URL pour Backblaze
-        # Backblaze retourne déjà une URL publique valide
-        # Seulement pour MinIO local, on remplace l'endpoint
-        # if hasattr(settings, 'MINIO_PUBLIC_URL') and settings.DEBUG:
-        #     parsed = urlparse(upload_url)
-        #     upload_url = upload_url.replace(
-        #         f"{parsed.scheme}://{parsed.netloc}",
-        #         settings.MINIO_PUBLIC_URL
-        #     )
-            
+        # 🔁 Remplacer l’endpoint par l’IP publique
+        # parsed = urlparse(upload_url)
+        # upload_url = upload_url.replace(
+        #     f"{parsed.scheme}://{parsed.netloc}",
+        #     settings.MINIO_PUBLIC_URL
+        # )
     except ClientError as e:
         return Response(
             {'error': f'Erreur génération URL: {str(e)}'},
@@ -380,7 +380,7 @@ def prepare_upload(request):
 
     return Response({
         'upload_url': upload_url,
-        'storage_path': unique_name
+        'storage_path': unique_name  # À utiliser dans l'appel à /confirm/
     })
 
 
