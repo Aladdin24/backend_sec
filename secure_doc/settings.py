@@ -167,7 +167,7 @@ if not DEBUG:
 
 # Pour le dev, on active MinIO que si les vars sont présentes
 USE_MINIO = os.getenv('AWS_S3_ENDPOINT_URL', None) is not None
-MINIO_PUBLIC_URL = "http://10.36.147.68:9000"
+MINIO_PUBLIC_URL = "https://s3.eu-central-003.backblazeb2.com"
 
 
 
