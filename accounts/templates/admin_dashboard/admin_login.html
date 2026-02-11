@@ -1,0 +1,45 @@
+<!-- templates/admin_dashboard/admin_login.html -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Admin - SecureDoc</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-8">
+        <div class="text-center mb-8">
+            <h1 class="text-2xl font-bold text-gray-800">SecureDoc Admin</h1>
+            <p class="text-gray-600">Connectez-vous à votre espace administrateur</p>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mb-4 p-3 bg-red-100 text-red-700 rounded">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label for="{{ form.email.id_for_label }}" class="block text-gray-700 mb-2">Email</label>
+                {{ form.email }}
+            </div>
+            <div class="mb-6">
+                <label for="{{ form.password.id_for_label }}" class="block text-gray-700 mb-2">Mot de passe</label>
+                {{ form.password }}
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                Se connecter
+            </button>
+        </form>
+
+        <div class="mt-6 text-center">
+            <a href="/" class="text-blue-600 hover:underline text-sm">
+                ← Retour à l'application utilisateur
+            </a>
+        </div>
+    </div>
+</body>
+</html>

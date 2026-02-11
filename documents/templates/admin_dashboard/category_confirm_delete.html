@@ -1,0 +1,30 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block content %}
+<div class="max-w-md">
+    <h1 class="text-2xl font-bold mb-6">Confirmer la suppression</h1>
+    
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <p class="text-gray-700 mb-4">
+            Êtes-vous sûr de vouloir supprimer la catégorie 
+            <strong>"{{ category.name }}"</strong> ?
+        </p>
+        <p class="text-red-600 text-sm">
+            ⚠️ Cette action est irréversible.
+        </p>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="flex space-x-4">
+            <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                Confirmer la suppression
+            </button>
+            <a href="{% url 'admin_categories_list' %}" 
+               class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">
+                Annuler
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

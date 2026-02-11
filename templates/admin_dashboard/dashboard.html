@@ -1,0 +1,103 @@
+<!-- templates/admin_dashboard/dashboard.html -->
+{% extends 'admin_dashboard/base.html' %}
+
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-gray-800">Tableau de Bord Administrateur</h1>
+  <p class="text-gray-600">Vue d'ensemble de votre instance SecureDoc</p>
+</div>
+
+<!-- Statistiques -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+  <!-- Utilisateurs -->
+  <div class="bg-white rounded-lg shadow p-6">
+    <div class="text-gray-500 text-sm">Utilisateurs</div>
+    <div class="text-3xl font-bold mt-1">{{ user_count }}</div>
+    <div class="text-green-600 text-sm mt-1">
+      {{ active_user_count }} actifs
+    </div>
+  </div>
+
+  <!-- Documents -->
+  <div class="bg-white rounded-lg shadow p-6">
+    <div class="text-gray-500 text-sm">Documents</div>
+    <div class="text-3xl font-bold mt-1">{{ doc_count }}</div>
+    <div class="text-gray-600 text-sm mt-1">
+      Stockés de façon sécurisée
+    </div>
+  </div>
+
+  <!-- Catégories -->
+  <div class="bg-white rounded-lg shadow p-6">
+    <div class="text-gray-500 text-sm">Catégories</div>
+    <div class="text-3xl font-bold mt-1">{{ category_count }}</div>
+    <div class="text-gray-600 text-sm mt-1">
+      Organisation des documents
+    </div>
+  </div>
+
+  <!-- Invitation -->
+  <div class="bg-white rounded-lg shadow p-6">
+    <div class="text-gray-500 text-sm">Invitations</div>
+    <div class="text-3xl font-bold mt-1">🚀</div>
+    <a href="{% url 'admin_invite_user' %}" 
+       class="mt-2 inline-block text-blue-600 hover:underline text-sm font-medium">
+      Inviter un utilisateur
+    </a>
+  </div>
+</div>
+
+<!-- Actions Rapides -->
+<div class="bg-white rounded-lg shadow p-6 mb-8">
+  <h2 class="text-xl font-semibold mb-4">Actions Rapides</h2>
+  <div class="flex flex-wrap gap-3">
+    <a href="{% url 'admin_users' %}" 
+       class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-gray-800 font-medium">
+      Gérer les utilisateurs
+    </a>
+    <a href="{% url 'admin_categories' %}" 
+       class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-gray-800 font-medium">
+      Gérer les catégories
+    </a>
+    <a href="{% url 'admin_invite_user' %}" 
+       class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium">
+      Inviter un utilisateur
+    </a>
+  </div>
+</div>
+
+<!-- Derniers Utilisateurs -->
+<div class="bg-white rounded-lg shadow p-6">
+  <h2 class="text-xl font-semibold mb-4">Derniers Utilisateurs</h2>
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead>
+        <tr class="bg-gray-50">
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        {% for user in latest_users %}
+        <tr>
+          <td class="px-4 py-3 text-sm text-gray-800">{{ user.email }}</td>
+          <td class="px-4 py-3">
+            {% if user.is_active %}
+              <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Actif</span>
+            {% else %}
+              <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">Invité</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 text-sm text-gray-600">{{ user.date_joined|date:"d M Y" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="3" class="px-4 py-3 text-sm text-gray-500 text-center">Aucun utilisateur</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

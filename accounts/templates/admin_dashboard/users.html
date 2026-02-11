@@ -1,0 +1,303 @@
+<!-- templates/admin_dashboard/users.html -->
+{% extends 'admin_dashboard/base.html' %}
+
+{% block content %}
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Gestion des Utilisateurs</h1>
+            <p class="text-gray-600">Liste complète des utilisateurs de la plateforme</p>
+        </div>
+        
+        <a href="{% url 'admin_create_user' %}" 
+           class="inline-flex items-center justify-center px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md">
+            <i class="fas fa-user-plus mr-2"></i>
+            Inviter un utilisateur
+        </a>
+    </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+    <!-- En-tête du tableau avec compteur -->
+    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center mb-3 sm:mb-0">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-users text-blue-600"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-800">Utilisateurs</h2>
+                    <p class="text-sm text-gray-600">{{ users|length }} utilisateur{{ users|length|pluralize }}</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </div>
+                    <input type="text" 
+                           placeholder="Rechercher un email..." 
+                           class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full sm:w-64 transition-all duration-200"
+                           id="user-search">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau -->
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        <div class="flex items-center">
+                            <span>Utilisateur</span>
+                            <button class="ml-1 text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-sort"></i>
+                            </button>
+                        </div>
+                    </th>
+                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Statut
+                    </th>
+                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Créé par
+                    </th>
+                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Date d'inscription
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for user in users %}
+                <tr class="hover:bg-gray-50 transition-colors duration-150 user-row">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 {% if user.is_active %}bg-blue-100 text-blue-600{% else %}bg-gray-100 text-gray-600{% endif %} rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-gray-900">{{ user.email }}</div>
+                                {% if user.last_login %}
+                                <div class="text-sm text-gray-500">
+                                    Dernière connexion : {{ user.last_login|timesince }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            {% if user != request.user %}
+                                {% if user.is_active %}
+                                    <div class="flex items-center">
+                                        <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                                        <a href="{% url 'admin_toggle_user' user.id %}" 
+                                           class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-sm font-medium transition-colors duration-200 inline-flex items-center"
+                                           onclick="return confirm('Êtes-vous sûr de vouloir désactiver cet utilisateur ?')">
+                                            <i class="fas fa-toggle-on mr-1.5"></i>
+                                            Actif
+                                        </a>
+                                    </div>
+                                {% else %}
+                                    <div class="flex items-center">
+                                        <div class="w-2 h-2 bg-yellow-500 rounded-full mr-2"></div>
+                                        <a href="{% url 'admin_toggle_user' user.id %}" 
+                                           class="px-3 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg text-sm font-medium transition-colors duration-200 inline-flex items-center"
+                                           onclick="return confirm('Êtes-vous sûr de vouloir activer cet utilisateur ?')">
+                                            <i class="fas fa-toggle-off mr-1.5"></i>
+                                            Inactif
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                <div class="flex items-center">
+                                    <div class="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                                    <span class="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium inline-flex items-center">
+                                        <i class="fas fa-user-circle mr-1.5"></i>
+                                        Vous
+                                    </span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </td>
+                    
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-user-plus text-gray-600 text-sm"></i>
+                            </div>
+                            <span class="text-sm text-gray-900">
+                                {{ user.created_by.email|default:"Système"|truncatechars:20 }}
+                            </span>
+                        </div>
+                    </td>
+                    
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-900">
+                            {{ user.date_joined|date:"d/m/Y" }}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            {{ user.date_joined|date:"H:i" }}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="px-6 py-12 text-center">
+                        <div class="text-gray-400">
+                            <i class="fas fa-users-slash text-4xl mb-3 opacity-50"></i>
+                            <p class="text-lg font-medium text-gray-500">Aucun utilisateur trouvé</p>
+                            <p class="text-gray-400 mt-1">Commencez par inviter un utilisateur</p>
+                            <a href="{% url 'admin_create_user' %}" class="mt-4 inline-flex items-center text-blue-600 hover:text-blue-800 font-medium">
+                                <i class="fas fa-user-plus mr-2"></i>
+                                Inviter un utilisateur
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pied de tableau avec informations -->
+    {% if users %}
+    <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div class="text-sm text-gray-600 mb-3 sm:mb-0">
+                <i class="fas fa-info-circle mr-1 text-blue-500"></i>
+                Cliquez sur le statut pour activer/désactiver un utilisateur
+            </div>
+            
+            <div class="text-sm text-gray-700">
+                <span class="font-medium">{{ users|length }}</span> utilisateur{{ users|length|pluralize }} au total
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal de confirmation personnalisé (optionnel) -->
+<div id="custom-confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4">
+        <div class="p-6">
+            <div class="flex items-center mb-4">
+                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                    <i class="fas fa-exclamation-triangle text-red-600"></i>
+                </div>
+                <h3 id="confirm-title" class="text-xl font-bold text-gray-800"></h3>
+            </div>
+            <p id="confirm-message" class="text-gray-600 mb-6"></p>
+            <div class="flex justify-end space-x-3">
+                <button onclick="cancelAction()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                    Annuler
+                </button>
+                <button id="confirm-action-btn" onclick="proceedAction()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
+                    Confirmer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Recherche en temps réel
+    document.getElementById('user-search').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('.user-row');
+        
+        rows.forEach(row => {
+            const email = row.querySelector('.font-medium').textContent.toLowerCase();
+            if (email.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+    
+    // Fonctionnalité de tri simple (optionnel)
+    let sortAscending = true;
+    document.querySelectorAll('th button').forEach(button => {
+        button.addEventListener('click', function() {
+            const header = this.closest('th');
+            const columnIndex = Array.from(header.parentElement.children).indexOf(header);
+            const tbody = document.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            rows.sort((a, b) => {
+                const aText = a.children[columnIndex].textContent.trim();
+                const bText = b.children[columnIndex].textContent.trim();
+                
+                if (sortAscending) {
+                    return aText.localeCompare(bText);
+                } else {
+                    return bText.localeCompare(aText);
+                }
+            });
+            
+            // Réorganiser les lignes
+            rows.forEach(row => tbody.appendChild(row));
+            sortAscending = !sortAscending;
+            
+            // Mettre à jour l'icône de tri
+            this.querySelector('i').className = sortAscending ? 'fas fa-sort-up' : 'fas fa-sort-down';
+        });
+    });
+    
+    // Modal de confirmation amélioré (optionnel)
+    let pendingActionUrl = '';
+    
+    function showCustomConfirm(action, url) {
+        const modal = document.getElementById('custom-confirm-modal');
+        const title = document.getElementById('confirm-title');
+        const message = document.getElementById('confirm-message');
+        const confirmBtn = document.getElementById('confirm-action-btn');
+        
+        if (action === 'disable') {
+            title.textContent = 'Désactiver l\'utilisateur';
+            message.textContent = 'Êtes-vous sûr de vouloir désactiver cet utilisateur ? Il ne pourra plus se connecter jusqu\'à ce que vous le réactiviez.';
+            confirmBtn.textContent = 'Désactiver';
+            confirmBtn.className = 'px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg';
+        } else {
+            title.textContent = 'Activer l\'utilisateur';
+            message.textContent = 'Êtes-vous sûr de vouloir activer cet utilisateur ? Il pourra à nouveau se connecter à l\'application.';
+            confirmBtn.textContent = 'Activer';
+            confirmBtn.className = 'px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg';
+        }
+        
+        pendingActionUrl = url;
+        modal.classList.remove('hidden');
+    }
+    
+    function cancelAction() {
+        document.getElementById('custom-confirm-modal').classList.add('hidden');
+        pendingActionUrl = '';
+    }
+    
+    function proceedAction() {
+        if (pendingActionUrl) {
+            window.location.href = pendingActionUrl;
+        }
+    }
+    
+    // Remplacer les confirmations natives par des modales personnalisées (optionnel)
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('a[onclick*="confirm"]').forEach(link => {
+            const originalOnClick = link.getAttribute('onclick');
+            const url = link.getAttribute('href');
+            
+            if (originalOnClick.includes("désactiver")) {
+                link.setAttribute('onclick', 'event.preventDefault(); showCustomConfirm("disable", "' + url + '")');
+            } else if (originalOnClick.includes("activer")) {
+                link.setAttribute('onclick', 'event.preventDefault(); showCustomConfirm("enable", "' + url + '")');
+            }
+        });
+    });
+</script>
+{% endblock %}

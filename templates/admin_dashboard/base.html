@@ -1,0 +1,36 @@
+<!-- templates/admin_dashboard/base.html -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureDoc Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="flex">
+        <!-- Sidebar -->
+        <div class="w-64 bg-gray-800 text-white min-h-screen">
+            <div class="p-4 text-xl font-bold">SecureDoc Admin</div>
+            <nav class="mt-6">
+                <a href="{% url 'admin_dashboard' %}" class="block px-4 py-2 hover:bg-gray-700">Tableau de bord</a>
+                <a href="{% url 'admin_users' %}" class="block px-4 py-2 hover:bg-gray-700">Utilisateurs</a>
+                <a href="{% url 'admin_categories' %}" class="block px-4 py-2 hover:bg-gray-700">Catégories</a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-6">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+</body>
+</html>

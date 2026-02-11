@@ -1,0 +1,34 @@
+<!-- templates/emails/invitation.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Invitation à SecureDoc</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f9fafb; margin: 0; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .header { background: #1e40af; color: white; padding: 30px 20px; text-align: center; }
+    .content { padding: 30px; color: #1f2937; }
+    .button { display: inline-block; background: #1e40af; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; margin: 20px 0; }
+    .footer { padding: 20px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔐 Invitation à SecureDoc</h1>
+    </div>
+    <div class="content">
+      <p>Bonjour,</p>
+      <p>Vous avez été invité(e) à rejoindre <strong>SecureDoc</strong>, notre plateforme sécurisée de gestion électronique de documents.</p>
+      <p>Pour activer votre compte, cliquez sur le bouton ci-dessous :</p>
+      <a href="{{ activation_link }}" class="button">Activer mon compte</a>
+      <p>Le lien est valide pendant <strong>72 heures</strong>.</p>
+      <p>À bientôt !<br><em>L’équipe SecureDoc</em></p>
+    </div>
+    <div class="footer">
+      <p>Ce message a été envoyé à {{ email }}. Si vous ne l’avez pas demandé, veuillez l’ignorer.</p>
+    </div>
+  </div>
+</body>
+</html>

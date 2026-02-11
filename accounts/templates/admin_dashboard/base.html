@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}SecureDoc Admin{% endblock %}</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+/* Styles globaux */
+html, body {
+    height: 100%;
+    overflow: hidden; /* Empêche le scroll global */
+}
+
+.active-link {
+    position: relative;
+}
+
+.active-link::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 24px;
+    background: #3b82f6;
+}
+
+/* Styles pour éviter le débordement */
+.sidebar-container {
+    height: 100vh; /* 100% de la hauteur de la fenêtre */
+    overflow-y: auto; /* Scroll uniquement dans la sidebar si nécessaire */
+    position: fixed; /* Fixe la sidebar */
+    left: 0;
+    top: 0;
+    z-index: 40;
+}
+
+.main-content-container {
+    height: 100vh; /* 100% de la hauteur de la fenêtre */
+    overflow-y: auto; /* Scroll uniquement dans le contenu principal */
+    margin-left: 16rem; /* Correspond à w-64 (256px) */
+    transition: margin-left 0.3s ease;
+}
+
+.main-content-collapsed {
+    margin-left: 5rem; /* Correspond à w-20 (80px) */
+}
+
+/* Scrollbar personnalisée pour la sidebar */
+.sidebar-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+}
+
+.sidebar-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Pour éviter que le contenu principal ne déborde */
+.main-content-inner {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+</style>
+</head>
+
+<body class="bg-gray-50 h-screen overflow-hidden">
+
+<!-- Conteneur principal avec flex -->
+<div class="flex h-screen">
+
+<!-- SIDEBAR -->
+<div id="sidebar" class="sidebar-container w-64 transition-all duration-300 bg-gradient-to-b from-gray-900 to-gray-800 text-white flex flex-col shadow-xl">
+
+    <!-- Logo -->
+    <div class="p-6 border-b border-gray-700 flex-shrink-0">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <div class="sidebar-text">
+                <h1 class="text-xl font-bold">SecureDoc</h1>
+                <p class="text-xs text-gray-400">Administration</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 px-4 py-6 overflow-y-auto">
+        <a href="{% url 'admin_dashboard' %}"
+           class="flex items-center px-3 py-3 rounded-lg mb-1 hover:bg-gray-700/50
+           {% if request.resolver_match.url_name == 'admin_dashboard' %}bg-gray-700/50 active-link{% endif %}">
+            <i class="fas fa-tachometer-alt w-5 mr-3 text-blue-400"></i>
+            <span class="sidebar-text">Tableau de bord</span>
+        </a>
+
+        <a href="{% url 'admin_users' %}"
+           class="flex items-center px-3 py-3 rounded-lg mb-1 hover:bg-gray-700/50
+           {% if 'admin_users' in request.resolver_match.url_name %}bg-gray-700/50 active-link{% endif %}">
+            <i class="fas fa-users w-5 mr-3 text-green-400"></i>
+            <span class="sidebar-text">Utilisateurs</span>
+        </a>
+
+        <a href="{% url 'admin_categories_list' %}"
+           class="flex items-center px-3 py-3 rounded-lg mb-1 hover:bg-gray-700/50
+           {% if 'admin_categories' in request.resolver_match.url_name %}bg-gray-700/50 active-link{% endif %}">
+            <i class="fas fa-folder w-5 mr-3 text-yellow-400"></i>
+            <span class="sidebar-text">Catégories</span>
+        </a>
+    </nav>
+
+    <!-- Déconnexion -->
+    <div class="p-4 border-t border-gray-700 flex-shrink-0">
+        <form method="post" action="{% url 'admin_logout' %}">
+            {% csrf_token %}
+            <button type="submit"
+                    class="w-full flex items-center justify-center px-4 py-2 bg-red-600/20 hover:bg-red-600/30 rounded-lg transition-colors duration-200">
+                <i class="fas fa-sign-out-alt mr-2"></i>
+                <span class="sidebar-text">Déconnexion</span>
+            </button>
+        </form>
+    </div>
+
+    <!-- Indicateur de réduction (optionnel) -->
+    <div class="p-3 border-t border-gray-700 text-xs text-gray-500 text-center hidden md:block flex-shrink-0">
+        <i class="fas fa-info-circle mr-1"></i>
+        <span class="sidebar-text">Cliquez sur <i class="fas fa-bars mx-1"></i> pour réduire</span>
+    </div>
+
+</div>
+
+<!-- MAIN CONTENT -->
+<div id="main-content" class="main-content-container w-full transition-all duration-300">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b sticky top-0 z-10 flex-shrink-0">
+        <div class="px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <button id="toggle-sidebar"
+                        class="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors duration-200">
+                    <i class="fas fa-bars"></i>
+                </button>
+                
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">
+                        {% block page_title %}Tableau de bord{% endblock %}
+                    </h2>
+                    <p class="text-gray-600">
+                        {% block page_subtitle %}Gestion administrative{% endblock %}
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <span class="text-sm text-gray-500 hidden md:inline">{{ request.user.email }}</span>
+                <div class="relative">
+                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-blue-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main content area -->
+    <main class="flex-1 overflow-y-auto p-8">
+        {% if messages %}
+        <div class="mb-6 space-y-3">
+            {% for message in messages %}
+            <div class="rounded-lg border px-4 py-3 
+                {% if message.tags == 'error' %}bg-red-50 border-red-200 text-red-700
+                {% else %}bg-green-50 border-green-200 text-green-700{% endif %}">
+                <div class="flex items-center">
+                    <i class="fas 
+                        {% if message.tags == 'error' %}fa-exclamation-circle
+                        {% else %}fa-check-circle{% endif %} 
+                        mr-2"></i>
+                    <span>{{ message }}</span>
+                    <button class="ml-auto text-gray-400 hover:text-gray-600" 
+                            onclick="this.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer optionnel -->
+    <footer class="border-t bg-white px-8 py-4 flex-shrink-0">
+        <div class="text-center text-sm text-gray-500">
+            <p>SecureDoc Admin • {% now "d/m/Y H:i" %}</p>
+        </div>
+    </footer>
+
+</div>
+
+</div>
+
+<script>
+// Fonction pour appliquer l'état de la sidebar
+function applySidebarState() {
+    const sidebar = document.getElementById("sidebar");
+    const mainContent = document.getElementById("main-content");
+    
+    if (localStorage.getItem("sidebarCollapsed") === "true") {
+        // Mode réduit
+        sidebar.classList.remove("w-64");
+        sidebar.classList.add("w-20");
+        mainContent.classList.remove("main-content-container");
+        mainContent.classList.add("main-content-collapsed");
+        document.querySelectorAll(".sidebar-text").forEach(e => e.classList.add("hidden"));
+    } else {
+        // Mode étendu
+        sidebar.classList.remove("w-20");
+        sidebar.classList.add("w-64");
+        mainContent.classList.remove("main-content-collapsed");
+        mainContent.classList.add("main-content-container");
+        document.querySelectorAll(".sidebar-text").forEach(e => e.classList.remove("hidden"));
+    }
+}
+
+// Appliquer l'état au chargement
+document.addEventListener('DOMContentLoaded', applySidebarState);
+
+// Gestion du bouton de toggle
+document.getElementById("toggle-sidebar").addEventListener("click", () => {
+    const sidebar = document.getElementById("sidebar");
+    const mainContent = document.getElementById("main-content");
+    
+    if (sidebar.classList.contains("w-64")) {
+        // Réduire
+        sidebar.classList.remove("w-64");
+        sidebar.classList.add("w-20");
+        mainContent.classList.remove("main-content-container");
+        mainContent.classList.add("main-content-collapsed");
+        document.querySelectorAll(".sidebar-text").forEach(e => e.classList.add("hidden"));
+        localStorage.setItem("sidebarCollapsed", "true");
+    } else {
+        // Étendre
+        sidebar.classList.remove("w-20");
+        sidebar.classList.add("w-64");
+        mainContent.classList.remove("main-content-collapsed");
+        mainContent.classList.add("main-content-container");
+        document.querySelectorAll(".sidebar-text").forEach(e => e.classList.remove("hidden"));
+        localStorage.setItem("sidebarCollapsed", "false");
+    }
+});
+
+
+// Raccourci clavier pour basculer la sidebar (Ctrl+B)
+document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+        e.preventDefault();
+        document.getElementById("toggle-sidebar").click();
+    }
+});
+</script>
+
+</body>
+</html>

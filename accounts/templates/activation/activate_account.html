@@ -1,0 +1,103 @@
+<h2>Activation du compte</h2>
+
+<form method="post">
+  {% csrf_token %}
+  <input type="hidden" name="token" value="{{ token }}">
+  <input type="hidden" name="public_key" id="public_key">
+
+  <p>Email : <strong>{{ email }}</strong></p>
+
+  <!-- Mot de passe -->
+  <label>Mot de passe</label>
+  <input type="password" id="password" name="password" required>
+
+  <label>Confirmer le mot de passe</label>
+  <input type="password" id="password_confirm" required>
+
+  <!-- Clé privée -->
+  <h3>🔐 Clé privée (à conserver)</h3>
+  <textarea id="private_key" rows="6" readonly></textarea>
+
+  <p style="color:red">
+    ⚠️ Copiez et sauvegardez cette clé privée.  
+    Elle ne pourra pas être récupérée plus tard.
+  </p>
+
+  <button type="submit">Activer mon compte</button>
+
+  {% if error %}
+    <p style="color:red">{{ error }}</p>
+  {% endif %}
+</form>
+
+{% if not error %}
+<script>
+async function generateKeyPair() {
+  const keyPair = await window.crypto.subtle.generateKey(
+    {
+      name: "RSA-OAEP",
+      modulusLength: 2048,
+      publicExponent: new Uint8Array([1, 0, 1]),
+      hash: "SHA-256"
+    },
+    true,
+    ["encrypt", "decrypt"]
+  );
+
+  const publicKey = await window.crypto.subtle.exportKey("spki", keyPair.publicKey);
+  const privateKey = await window.crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
+
+  const pubPem = btoa(String.fromCharCode(...new Uint8Array(publicKey)));
+  const privPem = btoa(String.fromCharCode(...new Uint8Array(privateKey)));
+
+  document.getElementById("public_key").value = pubPem;
+  document.getElementById("private_key").value = privPem;
+}
+
+// Validation avant envoi
+document.querySelector("form").addEventListener("submit", function (e) {
+  const pwd = document.getElementById("password").value;
+  const confirm = document.getElementById("password_confirm").value;
+
+  if (pwd !== confirm) {
+    e.preventDefault();
+    alert("Les mots de passe ne correspondent pas");
+    return;
+  }
+
+  if (!document.getElementById("public_key").value) {
+    e.preventDefault();
+    alert("Clés cryptographiques non générées");
+  }
+});
+
+// Générer clés au chargement
+generateKeyPair();
+</script>
+{% endif %}
+<style>
+  form {
+    max-width: 400px;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  label {
+    font-weight: bold;
+  }
+  input, textarea {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+  }
+  button {
+    padding: 10px;
+    background-color: #4A90E2;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  button:hover {
+    background-color: #357ABD;
+  }

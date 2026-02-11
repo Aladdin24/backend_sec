@@ -1,0 +1,9 @@
+Django>=4.2
+djangorestframework
+djangorestframework-simplejwt
+python-dotenv
+django-storages[boto3]
+psycopg2-binary  # pour PostgreSQL
+boto3
+dj-database-url
+drf-spectacular
