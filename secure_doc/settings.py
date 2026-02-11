@@ -227,7 +227,7 @@ from decouple import config
 
 # === CONFIGURATION UNIFIÉE MINIO / BACKBLAZE B2 ===
 USE_S3 = config('USE_S3', default=False, cast=bool)
-MINIO_PUBLIC_URL = "https://s3.eu-central-003.backblazeb2.com"
+#MINIO_PUBLIC_URL = "https://s3.eu-central-003.backblazeb2.com"
 
 if USE_S3:
     # Stockage S3 (MinIO ou Backblaze B2)

@@ -224,12 +224,12 @@ def download_document(request, document_id):
         
         # ✅ CORRECTION : Ne PAS modifier l'URL pour Backblaze
         # Seulement pour MinIO local (développement)
-        if hasattr(settings, 'MINIO_PUBLIC_URL') and settings.DEBUG:
-            parsed = urlparse(download_url)
-            download_url = download_url.replace(
-                f"{parsed.scheme}://{parsed.netloc}",
-                settings.MINIO_PUBLIC_URL
-            )
+        # if hasattr(settings, 'MINIO_PUBLIC_URL') and settings.DEBUG:
+        #     parsed = urlparse(download_url)
+        #     download_url = download_url.replace(
+        #         f"{parsed.scheme}://{parsed.netloc}",
+        #         settings.MINIO_PUBLIC_URL
+        #     )
             
     except ClientError as e:
         return Response(
@@ -365,12 +365,12 @@ def prepare_upload(request):
         # ✅ CORRECTION : Ne PAS modifier l'URL pour Backblaze
         # Backblaze retourne déjà une URL publique valide
         # Seulement pour MinIO local, on remplace l'endpoint
-        if hasattr(settings, 'MINIO_PUBLIC_URL') and settings.DEBUG:
-            parsed = urlparse(upload_url)
-            upload_url = upload_url.replace(
-                f"{parsed.scheme}://{parsed.netloc}",
-                settings.MINIO_PUBLIC_URL
-            )
+        # if hasattr(settings, 'MINIO_PUBLIC_URL') and settings.DEBUG:
+        #     parsed = urlparse(upload_url)
+        #     upload_url = upload_url.replace(
+        #         f"{parsed.scheme}://{parsed.netloc}",
+        #         settings.MINIO_PUBLIC_URL
+        #     )
             
     except ClientError as e:
         return Response(
