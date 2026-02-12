@@ -1,4 +1,5 @@
 # accounts/views.py
+import threading
 from documents.permissions import IsAdminUser
 from .models import InvitationToken, User
 from django.core.mail import send_mail
@@ -111,6 +112,29 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+def _send_welcome_email(email, temp_password):
+    """Fonction asynchrone pour envoyer l'email de bienvenue"""
+    try:
+        send_mail(
+            subject="Bienvenue sur SecureDoc",
+            message=f"""
+Bonjour,
+
+Votre compte SecureDoc a été créé par un administrateur.
+
+📧 Email : {email}
+🔒 Mot de passe temporaire : {temp_password}
+
+⚠️ Vous devrez changer ce mot de passe à votre première connexion.
+
+Connectez-vous ici : https://app.secdoc.example.com/login
+            """,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+        )
+    except Exception as e:
+        logger.error(f"Échec de l'envoi de l'email à {email}: {e}")
+
 @staff_member_required(login_url='admin_login')
 @permission_classes([IsAdminUser])
 def admin_create_user(request):
@@ -135,24 +159,12 @@ def admin_create_user(request):
                     created_by=request.user
                 )
                 
-                # Envoyer email avec identifiants
-                send_mail(
-                    subject="Bienvenue sur SecureDoc",
-                    message=f"""
-                        Bonjour,
-
-                        Votre compte SecureDoc a été créé par un administrateur.
-
-                        📧 Email : {email}
-                        🔒 Mot de passe temporaire : {temp_password}
-
-                        ⚠️ Vous devrez changer ce mot de passe à votre première connexion.
-
-                        Connectez-vous ici : https://app.secdoc.example.com/login
-                                            """,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[email],
+                # ENVOI ASYNCHRONE DE L'EMAIL
+                email_thread = threading.Thread(
+                    target=_send_welcome_email,
+                    args=(email, temp_password)
                 )
+                email_thread.start()
                 
                 messages.success(request, f"Utilisateur créé et identifiants envoyés à {email}")
                 return redirect('admin_users')
