@@ -150,15 +150,25 @@ AUTH_USER_MODEL = 'accounts.User'  # On va créer notre propre User
 # DEFAULT_FROM_EMAIL = 'aliouneelemine@gmail.com'
 #APPEND_SLASH = False
 # EMAIL CONFIG (PRODUCTION / REAL EMAILS)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'aliouneelemine@gmail.com'  # Votre email Gmail
-EMAIL_HOST_PASSWORD = 'liox quqy zexn qlms'  # Mot de passe d'application
-DEFAULT_FROM_EMAIL = 'aliouneelemine@gmail.com'
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'aliouneelemine@gmail.com'  # Votre email Gmail
+# EMAIL_HOST_PASSWORD = 'liox quqy zexn qlms'  # Mot de passe d'application
+# DEFAULT_FROM_EMAIL = 'aliouneelemine@gmail.com'
 
 
+from decouple import config
+# Email Configuration - MailerSend
+if not DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'smtp.mailersend.net'
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = 'MS_vkepXh@test-yxj6lj9vpjq4do2r.mlsender.net'  # Mot-clé fixe pour MailerSend
+    EMAIL_HOST_PASSWORD = config('MAILERSEND_API_KEY')  # Ta clé API
+    DEFAULT_FROM_EMAIL = 'noreply@test-yxj6lj9vpjq4do2r.mlsender.net'  # Remplace XXXX
 
 # MinIO / S3 Configuration
 # if not DEBUG:
