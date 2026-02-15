@@ -18,7 +18,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = False
 
 
-ALLOWED_HOSTS = ['ton-utilisateur.pythonanywhere.com']  # À restreindre en prod
+ALLOWED_HOSTS = ['alioune25.pythonanywhere.com']  # À restreindre en prod
 
 
 # Application definition
