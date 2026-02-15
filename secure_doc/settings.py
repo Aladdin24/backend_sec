@@ -1,6 +1,7 @@
 
 import os
 from pathlib import Path
+import dj_database_url
 from dotenv import load_dotenv
 from decouple import config
 
@@ -82,14 +83,7 @@ if not DEBUG:
     
     # Database (PythonAnywhere fournit une DB)
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',  # ou postgresql
-            'NAME': 'alioune25$secdoc',  # Format: nomutilisateur$nomdb
-            'USER': 'alioune25',
-            'PASSWORD': config('DB_PASSWORD'),
-            'HOST': 'alioune25.mysql.pythonanywhere-services.com',  # ou postgresql
-            'PORT': '',
-        }
+     'default': dj_database_url.parse(os.getenv('DATABASE_URL'))
     }
     
     # Static files
