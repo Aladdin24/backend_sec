@@ -2,7 +2,7 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-
+from decouple import config
 
 load_dotenv()
 
@@ -13,7 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 
-DEBUG = os.getenv('DEBUG', 'False') == 'true'
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 
 ALLOWED_HOSTS = ['*']  # À restreindre en prod
@@ -70,12 +70,31 @@ WSGI_APPLICATION = 'secure_doc.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
+if not DEBUG:
+    ALLOWED_HOSTS = ['alioune25.pythonanywhere.com']  # ← Remplace "tonnom"
+    
+    # Database (PythonAnywhere fournit une DB)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',  # ou postgresql
+            'NAME': 'alioune25$secdoc',  # Format: nomutilisateur$nomdb
+            'USER': 'alioune25',
+            'PASSWORD': config('DB_PASSWORD'),
+            'HOST': 'alioune25.mysql.pythonanywhere-services.com',  # ou postgresql
+            'PORT': '',
+        }
     }
-}
+    
+    # Static files
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # DATABASE
 # import dj_database_url
