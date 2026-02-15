@@ -13,12 +13,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 
-# DEBUG = os.getenv('DEBUG', 'False') == 'true'
-
-DEBUG = False
+DEBUG = os.getenv('DEBUG', 'False') == 'true'
 
 
-ALLOWED_HOSTS = ['alioune25.pythonanywhere.com']  # À restreindre en prod
+ALLOWED_HOSTS = ['*']  # À restreindre en prod
 
 
 # Application definition
@@ -72,16 +70,11 @@ WSGI_APPLICATION = 'secure_doc.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-from decouple import config
-import dj_database_url
 DATABASES = {
-    'default': dj_database_url.config(default=config('DATABASE_URL'))
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 # DATABASE
@@ -261,11 +254,7 @@ if USE_S3:
     AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
 
 # Static files (obligatoire pour Render)
-# STATIC_URL = '/static/'
-# if not DEBUG:
-#     STATIC_ROOT = BASE_DIR / 'staticfiles'
-#     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+if not DEBUG:
+    STATIC_ROOT = BASE_DIR / 'staticfiles'
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
