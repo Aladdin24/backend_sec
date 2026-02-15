@@ -1,9 +1,8 @@
 
 import os
 from pathlib import Path
-import dj_database_url
 from dotenv import load_dotenv
-from decouple import config
+
 
 load_dotenv()
 
@@ -14,7 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = os.getenv('DEBUG', 'False') == 'true'
 
 
 ALLOWED_HOSTS = ['*']  # À restreindre en prod
@@ -71,24 +70,12 @@ WSGI_APPLICATION = 'secure_doc.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
-if not DEBUG:
-    ALLOWED_HOSTS = ['alioune25.pythonanywhere.com']  # ← Remplace "tonnom"
-    
-    # Database (PythonAnywhere fournit une DB)
-    DATABASES = {
-     'default': dj_database_url.parse(os.getenv('DATABASE_URL'))
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
-    
-    # Static files
-    # STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-    # STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+}
 
 # DATABASE
 # import dj_database_url
@@ -270,6 +257,4 @@ if USE_S3:
 STATIC_URL = '/static/'
 if not DEBUG:
     STATIC_ROOT = BASE_DIR / 'staticfiles'
-    # STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-    
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
